@@ -292,3 +292,5 @@ biblio/*.new
 /*.pdf
 .tmp/
 temp/
+output/
+__old__/

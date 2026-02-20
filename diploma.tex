@@ -6,22 +6,30 @@
 % Включение титульного листа (первая страница файла Title.pdf)
 \includepdf[pages={1-1}]{extra/Title.pdf}
 
-% Аннотация, Содержание, Введение
+% Аннотация
+\input{chapters/annotation.tex}
+
+% Содержание
+\newpage
+\renewcommand{\contentsname}{\centerline{\large СОДЕРЖАНИЕ}}
+\tableofcontents
+
+% Введение
 \input{chapters/introduction.tex}
 
 % Подключение глав
-\input{chapters/chapter_1.tex}
-\input{chapters/chapter_2.tex}
-\input{chapters/chapter_3.tex}
-\input{chapters/chapter_4.tex}
+\input{chapters/litreview/base.tex}
+% \input{chapters/chapter_2.tex}
+% \input{chapters/chapter_3.tex}
+% \input{chapters/chapter_4.tex}
 
 % Заключение
-\input{chapters/conclusion.tex}
+% \input{chapters/conclusion.tex}
 
 % Библиографический список
 \input{chapters/bibliography.tex}
 
 % Приложение (может быть пустым)
-\input{chapters/appendix.tex}
+\input{chapters/appendix/base.tex}
 
 \end{document}

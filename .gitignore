@@ -294,3 +294,4 @@ biblio/*.new
 temp/
 output/
 __old__/
+./presentation.tex

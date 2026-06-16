@@ -78,6 +78,8 @@
 % Создание нового типа столбца для выравнивания содержимого по центру
 \newcommand{\PreserveBackslash}[1]{\let\temp=\\#1\let\\=\temp}
 \newcolumntype{C}[1]{>{\PreserveBackslash\centering}p{#1}}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
 % Настройка стиля страницы
 \pagestyle{fancy}      % Использование стиля "fancy" для оформления страниц

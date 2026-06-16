@@ -18,9 +18,12 @@
 
 \begin{table}[!t]
   \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.15}
   \caption{Основные смысловые поля разметки.}
   \label{tab:labels-json-format}
-  \begin{tabular}{|p{45mm}|p{95mm}|}
+  \begin{tabularx}{\textwidth}{|L{42mm}|Y|}
     \hline
     Поле разметки & Содержание \\
     \hline
@@ -34,7 +37,7 @@
     \hline
     Целевое изображение & Бинарная матрица размера $6 \times 6$, где значения 0 и 1 задают структуру целевого изображения. \\
     \hline
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 Таким образом, каждая EEG-эпоха связывается с целевым изображением через индекс блока и соответствующую запись разметки. Перед обучением моделей целевая матрица изображения векторизуется в последовательность из 36 бинарных значений, что позволяет рассматривать реконструкцию как многовыходную бинарную задачу.
@@ -120,9 +123,12 @@ Exact match accuracy является наиболее строгой метри
 
 \begin{table}[!t]
   \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.15}
   \caption{Группы признаков и их алгоритмическое содержание.}
   \label{tab:feature-implementation-anchors}
-  \begin{tabular}{|p{36mm}|p{52mm}|p{52mm}|}
+  \begin{tabularx}{\textwidth}{|L{34mm}|L{48mm}|Y|}
     \hline
     Группа & Содержание & Выходное представление \\
     \hline
@@ -142,7 +148,7 @@ Exact match accuracy является наиболее строгой метри
     гистограммы на канал при $m=8$ &
     Гистограммы локальных кодов для каждого EEG-канала \\
     \hline
-  \end{tabular}
+  \end{tabularx}
 \end{table}
 
 \subsection*{Временные признаки}
@@ -334,3 +340,184 @@ j = 0,\dots,2^m-1.
 блоки приводятся к векторному представлению только внутри соответствующего
 train-only протокола, чтобы масштабирование, отбор признаков и настройка
 гиперпараметров не использовали информацию из тестовой части.
+
+\phantomsection
+\section*{Архитектуры нейросетевых моделей}
+\addcontentsline{toc}{section}{Архитектуры нейросетевых моделей}
+\label{app:deep-architectures}
+
+Нейросетевые эксперименты используют спектральные адаптации архитектур из
+семейства ARL EEGModels. Реализация доступна в модуле
+\url{https://github.com/Slauva/-master-thesis-code-2024-2026/tree/main/experiments/random_imagery_torch}.
+Входной тензор каждой модели имеет вид
+
+\begin{equation}
+X \in \mathbb{R}^{B \times P \times C \times W},
+\end{equation}
+
+где $B$ - размер батча, $P$ - число спектральных плоскостей, $C$ - число
+EEG-электродов, а $W$ - ширина спектральной или временно-спектральной оси.
+Для FFT/Welch вход имеет форму $(B,1,C,F)$, а для Morlet, Superlet и STFT -
+форму $(B,F,C,T)$, где частотные отсчёты становятся плоскостями входа.
+EOG-каналы в эти модели не подаются. Все архитектуры возвращают 36
+вещественных логитов, соответствующих пикселям целевого бинарного изображения;
+sigmoid-преобразование, порог 0.5 и вычисление метрик выполняются вне
+архитектурного модуля.
+
+Важно, что используемые модели не являются численно идентичными переносами
+оригинальных TensorFlow/Keras-реализаций. Они сохраняют основные идеи
+исходных EEGNet, DeepConvNet и ShallowConvNet~\footcite{10.1088/1741-2552/aace8c,10.1002/hbm.23730},
+но адаптированы к спектральным входам: ядра ограничиваются доступной шириной
+оси $W$, используется TensorFlow-style SAME padding, а в конце применяется
+adaptive global pooling вместо фиксированной flatten-геометрии исходных
+моделей. Ограничения max-norm применяются явно после шага оптимизатора.
+
+\begin{table}[!t]
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.15}
+  \caption{Нейросетевые архитектуры и их роль в экспериментальном пайплайне.}
+  \label{tab:deep-architecture-summary}
+  \begin{tabularx}{\textwidth}{|L{34mm}|L{38mm}|Y|}
+    \hline
+    Архитектура & Статус в работе & Основная структура реализации \\
+    \hline
+    EEGNet & Основная архитектура полного сравнения &
+    Временная свёртка, depthwise-пространственная свёртка по всем электродам,
+    separable-блок, average pooling, dropout и линейная голова на 36 выходов. \\
+    \hline
+    DeepConvNet & Основная архитектура полного сравнения &
+    Временная и пространственная свёртки в начальном блоке, затем
+    последовательные convolution--batch normalization--ELU--max pooling--dropout
+    блоки с 25, 50, 100 и 200 фильтрами и линейная голова. \\
+    \hline
+    ShallowConvNet & Основная архитектура полного сравнения &
+    Временная свёртка, пространственная свёртка, batch normalization,
+    квадратичная нелинейность, average pooling, логарифмическая нелинейность,
+    dropout и линейная голова. \\
+    \hline
+    EEGNet-SSVEP & Исследовательский порт, не входит в 12 основных запусков &
+    Вариант EEGNet с увеличенным временным ядром и числом фильтров
+    ($F_1=96$, $F_2=96$), сохранённый для совместимости с ARL EEGModels. \\
+    \hline
+    EEGNet-v1 & Исследовательский порт, не входит в 12 основных запусков &
+    Более ранняя EEGNet-подобная схема: пространственная свёртка, перестановка
+    осей, две двумерные свёртки с batch normalization, ELU и dropout. \\
+    \hline
+  \end{tabularx}
+\end{table}
+
+\subsection*{EEGNet}
+
+EEGNet используется как компактная архитектура, в которой явно разделены
+темпоральная, пространственная и separable-свёртки. В спектральной адаптации
+первый блок выполняет свёртку только вдоль оси $W$ и формирует $F_1=8$
+карт признаков. Затем depthwise-свёртка с ядром $(C,1)$ агрегирует информацию
+по всем электродам отдельно для каждой темпоральной карты. При множителе
+глубины $D=2$ этот блок создаёт $F_1D=16$ карт признаков. После ELU,
+average pooling и dropout применяется separable-блок: depthwise-свёртка
+вдоль оси $W$, затем pointwise-свёртка $1\times1$ до $F_2=16$ карт.
+Финальная adaptive average pooling-операция сводит пространственно-временные
+оси к одному вектору, который подаётся в линейный слой из 36 выходов.
+
+Минимальная схема прямого прохода:
+
+\begin{enumerate}
+  \item $X \rightarrow$ SAME temporal convolution $(1, \min(64,W))$.
+  \item Batch normalization $\rightarrow$ depthwise spatial convolution $(C,1)$.
+  \item ELU $\rightarrow$ average pooling $(1,4)$ $\rightarrow$ dropout.
+  \item Depthwise separable convolution $\rightarrow$ ELU $\rightarrow$
+  average pooling $(1,8)$ $\rightarrow$ dropout.
+  \item Adaptive global pooling $\rightarrow$ linear head $\rightarrow 36$ logits.
+\end{enumerate}
+
+\subsection*{DeepConvNet}
+
+DeepConvNet выступает как более глубокая свёрточная baseline-архитектура для
+EEG-декодирования~\footcite{10.1002/hbm.23730}. В реализации первый блок
+разделяет свёртку вдоль спектральной оси и пространственную свёртку по всем
+электродам. После этого используются три дополнительные свёрточные ступени.
+Число карт признаков возрастает по схеме $25 \rightarrow 50 \rightarrow
+100 \rightarrow 200$. Каждый блок включает batch normalization, ELU,
+max pooling и dropout. После adaptive global pooling применяется линейная
+голова из 36 выходов.
+
+Диаграммно эту архитектуру удобно показывать как вертикальную цепочку блоков:
+``спектральная свёртка 25'' $\rightarrow$ ``пространственная свёртка 25''
+$\rightarrow$ ``Conv 50'' $\rightarrow$ ``Conv 100'' $\rightarrow$
+``Conv 200'' $\rightarrow$ ``36 логитов''. Для всех свёрточных слоёв и
+линейной головы в реализации предусмотрена max-norm-проекция.
+
+\subsection*{ShallowConvNet}
+
+ShallowConvNet предназначена для более прямого воспроизведения классической
+схемы band-power-декодирования в виде нейросетевого слоя~\footcite{10.1002/hbm.23730}.
+Сначала применяется свёртка вдоль оси $W$ с 40 фильтрами, затем
+пространственная свёртка с ядром $(C,1)$. После batch normalization
+используется квадратичная нелинейность, average pooling и логарифмирование
+с нижним численным порогом. Такая последовательность соответствует идее:
+выделить фильтрованный сигнал, оценить локальную мощность и подать её в
+классификационную голову. В данной задаче классификационная голова заменена
+на многовыходный слой из 36 логитов.
+
+\subsection*{Исследовательские порты EEGNet-SSVEP и EEGNet-v1}
+
+Помимо трёх основных архитектур, в коде реализованы EEGNet-SSVEP и EEGNet-v1.
+Они использовались как проверочные порты совместимости с ARL EEGModels и не
+входят в основную матрицу из 12 полных запусков, где пересекаются три
+архитектуры EEGNet, DeepConvNet и ShallowConvNet с четырьмя спектральными
+представлениями FFT/Welch, Morlet, Superlet и STFT.
+
+EEGNet-SSVEP наследует структуру EEGNet, но использует более длинное
+исходное ядро и больше фильтров. В спектральной адаптации длина ядра также
+ограничивается фактической шириной входа $W$. EEGNet-v1 сначала выполняет
+пространственную свёртку по электродам, затем переставляет оси и применяет
+две двумерные свёртки с batch normalization, ELU и dropout. Для обеих
+моделей сохраняется общий контракт: вход $(B,P,C,W)$, выход 36 логитов,
+sigmoid и пороговое решение вне модели.
+
+\subsection*{Спецификации для рисунков архитектур}
+
+Для последующего построения иллюстраций достаточно использовать следующие
+текстовые спецификации. На схемах следует подписывать оси на русском языке:
+``батч'', ``спектральные плоскости'', ``электроды'', ``частота/время'' и
+``36 пикселей''. Цвета блоков лучше разделить по типам операций: свёртки,
+нормализация, нелинейность, pooling/dropout и выходная голова.
+
+\begin{table}[!t]
+  \centering
+  \small
+  \setlength{\tabcolsep}{3pt}
+  \renewcommand{\arraystretch}{1.15}
+  \caption{Спецификации будущих схем нейросетевых архитектур.}
+  \label{tab:deep-architecture-diagram-specs}
+  \begin{tabularx}{\textwidth}{|L{42mm}|Y|}
+    \hline
+    Архитектура & Содержание схемы \\
+    \hline
+    EEGNet &
+    Вход $(B,P,C,W)$; temporal convolution; batch normalization;
+    depthwise spatial convolution по оси электродов; ELU; average pooling;
+    dropout; depthwise separable convolution; ELU; average pooling; dropout;
+    adaptive global pooling; linear head; выход ``36 логитов''. \\
+    \hline
+    DeepConvNet &
+    Вход $(B,P,C,W)$; temporal convolution 25; spatial convolution 25;
+    четыре повторяющихся блока с подписями 25, 50, 100, 200 фильтров;
+    внутри блока показать batch normalization, ELU, max pooling и dropout;
+    adaptive global pooling; выход ``36 логитов''. \\
+    \hline
+    ShallowConvNet &
+    Вход $(B,P,C,W)$; temporal convolution 40; spatial convolution 40;
+    batch normalization; square; average pooling; log; dropout; adaptive
+    global pooling; выход ``36 логитов''. \\
+    \hline
+    EEGNet-SSVEP и EEGNet-v1 &
+    Показывать как дополнительные, не основные ветви: EEGNet-SSVEP рядом с
+    EEGNet с пометкой ``увеличенные фильтры'', EEGNet-v1 как цепочку
+    spatial convolution, transpose, Conv2D, Conv2D, pooling/head. Обязательно
+    добавить подпись ``исследовательский порт, не основная матрица запусков''. \\
+    \hline
+  \end{tabularx}
+\end{table}

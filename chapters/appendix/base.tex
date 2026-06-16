@@ -117,9 +117,7 @@ Exact match accuracy является наиболее строгой метри
 В классических экспериментах EEG-фрагмент сначала приводится к единому
 аналитическому представлению: из записи выбирается интервал $[0.5, 15.5)$
 с, сигнал ресэмплируется до 125 Гц, а затем признаки вычисляются по полному
-15-секундному окну. EOG-каналы в признаковый вектор не включаются. Исходный
-код реализации доступен в открытом репозитории:
-\url{https://github.com/Slauva/-master-thesis-code-2024-2026/tree/main}.
+15-секундному окну. EOG-каналы в признаковый вектор не включаются.
 
 \begin{table}[!t]
   \centering
@@ -444,10 +442,10 @@ max pooling и dropout. После adaptive global pooling применяетс�
 голова из 36 выходов.
 
 Диаграммно эту архитектуру удобно показывать как вертикальную цепочку блоков:
-``спектральная свёртка 25'' $\rightarrow$ ``пространственная свёртка 25''
-$\rightarrow$ ``Conv 50'' $\rightarrow$ ``Conv 100'' $\rightarrow$
-``Conv 200'' $\rightarrow$ ``36 логитов''. Для всех свёрточных слоёв и
-линейной головы в реализации предусмотрена max-norm-проекция.
+«спектральная свёртка 25» $\rightarrow$ «пространственная свёртка 25»
+$\rightarrow$ «Conv 50» $\rightarrow$ «Conv 100» $\rightarrow$
+«Conv 200» $\rightarrow$ «36 логитов». Для всех свёрточных слоёв и линейной
+головы в реализации предусмотрена max-norm-проекция.
 
 \subsection*{ShallowConvNet}
 
@@ -477,47 +475,34 @@ EEGNet-SSVEP наследует структуру EEGNet, но использу
 моделей сохраняется общий контракт: вход $(B,P,C,W)$, выход 36 логитов,
 sigmoid и пороговое решение вне модели.
 
-\subsection*{Спецификации для рисунков архитектур}
+\subsection*{Схемы основных архитектур}
 
-Для последующего построения иллюстраций достаточно использовать следующие
-текстовые спецификации. На схемах следует подписывать оси на русском языке:
-``батч'', ``спектральные плоскости'', ``электроды'', ``частота/время'' и
-``36 пикселей''. Цвета блоков лучше разделить по типам операций: свёртки,
-нормализация, нелинейность, pooling/dropout и выходная голова.
+Основные архитектуры полного нейросетевого сравнения показаны на рис.
+\ref{fig:eegnet-architecture}--\ref{fig:shallowconvnet-architecture}. Схемы
+отражают общий порядок блоков в спектральных адаптациях и не задают
+тензорные размеры каждого промежуточного слоя.
 
-\begin{table}[!t]
+\begin{figure}[!t]
   \centering
-  \small
-  \setlength{\tabcolsep}{3pt}
-  \renewcommand{\arraystretch}{1.15}
-  \caption{Спецификации будущих схем нейросетевых архитектур.}
-  \label{tab:deep-architecture-diagram-specs}
-  \begin{tabularx}{\textwidth}{|L{42mm}|Y|}
-    \hline
-    Архитектура & Содержание схемы \\
-    \hline
-    EEGNet &
-    Вход $(B,P,C,W)$; temporal convolution; batch normalization;
-    depthwise spatial convolution по оси электродов; ELU; average pooling;
-    dropout; depthwise separable convolution; ELU; average pooling; dropout;
-    adaptive global pooling; linear head; выход ``36 логитов''. \\
-    \hline
-    DeepConvNet &
-    Вход $(B,P,C,W)$; temporal convolution 25; spatial convolution 25;
-    четыре повторяющихся блока с подписями 25, 50, 100, 200 фильтров;
-    внутри блока показать batch normalization, ELU, max pooling и dropout;
-    adaptive global pooling; выход ``36 логитов''. \\
-    \hline
-    ShallowConvNet &
-    Вход $(B,P,C,W)$; temporal convolution 40; spatial convolution 40;
-    batch normalization; square; average pooling; log; dropout; adaptive
-    global pooling; выход ``36 логитов''. \\
-    \hline
-    EEGNet-SSVEP и EEGNet-v1 &
-    Показывать как дополнительные, не основные ветви: EEGNet-SSVEP рядом с
-    EEGNet с пометкой ``увеличенные фильтры'', EEGNet-v1 как цепочку
-    spatial convolution, transpose, Conv2D, Conv2D, pooling/head. Обязательно
-    добавить подпись ``исследовательский порт, не основная матрица запусков''. \\
-    \hline
-  \end{tabularx}
-\end{table}
+  \includegraphics[width=150mm]{eegnet_architecture.jpg}
+  \caption{Схема спектральной адаптации EEGNet для многовыходной реконструкции.}
+  \label{fig:eegnet-architecture}
+\end{figure}
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=150mm]{deepconvnet_architecture.jpg}
+  \caption{Схема спектральной адаптации DeepConvNet для многовыходной реконструкции.}
+  \label{fig:deepconvnet-architecture}
+\end{figure}
+
+\begin{figure}[!t]
+  \centering
+  \includegraphics[width=150mm]{shallowconvnet_architecture.jpg}
+  \caption{Схема спектральной адаптации ShallowConvNet для многовыходной реконструкции.}
+  \label{fig:shallowconvnet-architecture}
+\end{figure}
+
+EEGNet-SSVEP и EEGNet-v1 в данном приложении описаны текстово как
+исследовательские порты совместимости, поскольку они не входят в основную
+матрицу полных запусков.

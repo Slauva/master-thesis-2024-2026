@@ -4,7 +4,7 @@
 \usepackage[english,russian]{babel} % переключение языков
 
 % Геометрия страницы и графика
-\usepackage[left=3cm, right=1cm, top=2cm, bottom=2cm]{geometry} % поля страницы
+\usepackage[left=2.5cm, right=2cm, top=2cm, bottom=2cm]{geometry} % поля страницы
 \usepackage{graphicx} % подключение графики
 \usepackage{pdfpages} % вставка pdf-страниц
 
@@ -35,6 +35,12 @@
 % Установка шрифта Times New Roman
 \renewcommand{\rmdefault}{ftm}
 
+% Настройка текста
+\usepackage{setspace}
+\setstretch{1.5} % промежуточный интервал
+\setlength{\parindent}{1.5cm}
+
+
 % Создание нового типа столбца для выравнивания содержимого по центру
 \newcommand{\PreserveBackslash}[1]{\let\temp=\\#1\let\\=\temp}
 \newcolumntype{C}[1]{>{\PreserveBackslash\centering}p{#1}}
@@ -47,6 +53,11 @@
 
 % Настройка подписей к изображениям и таблицам
 \captionsetup{format=hang,labelsep=period}
+\captionsetup[table]{
+  position=top,
+  justification=centering,
+  singlelinecheck=false
+}
 
 % Использование полужирного начертания для векторов
 \let\vec=\mathbf

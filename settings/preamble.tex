@@ -20,7 +20,41 @@
 
 % Библиография и ссылки
 \usepackage{cite} % поддержка цитирования
-\usepackage{hyperref} % создание гиперссылок
+\usepackage[hyperfootnotes=false]{hyperref} % создание гиперссылок
+\providecommand{\selectlanguageifdefined}[1]{%
+  \expandafter\ifx\csname date#1\endcsname\relax
+  \else\selectlanguage{#1}\fi
+}
+\providecommand*{\BibUrl}[1]{\url{#1}}
+\providecommand{\BibAnnote}[1]{}
+\providecommand*{\BibEmph}[1]{#1}
+\ProvideTextCommandDefault{\cyrdash}{\iflanguage{russian}{\hbox
+  to.8em{--\hss--}}{\textemdash}}
+\providecommand*{\BibDash}{}
+\providecommand{\newblock}{\ignorespaces}
+\makeatletter
+\newcommand{\fullciteentry}[1]{%
+  \@ifundefined{fullcite@#1}{%
+    \textbf{[Источник #1 не найден; обновите полные библиографические записи]}%
+  }{%
+    \csname fullcite@#1\endcsname
+  }%
+}
+\newcommand{\printfootcitelist}[1]{%
+  \begingroup
+  \def\href##1##2{##2}%
+  \def\url##1{\nolinkurl{##1}}%
+  \def\BibUrl##1{\nolinkurl{##1}}%
+  \def\footcite@separator{}%
+  \@for\footcite@key:=#1\do{%
+    \footcite@separator\expandafter\fullciteentry\expandafter{\footcite@key}%
+    \def\footcite@separator{\par\medskip}%
+  }%
+  \endgroup
+}
+\DeclareRobustCommand{\footcite}[1]{\footnote{\nocite{#1}\printfootcitelist{#1}}\selectlanguage{russian}}
+\makeatother
+\InputIfFileExists{biblio/footcite-entries.tex}{}{}
 
 % Прочее
 \usepackage{color} % работа с цветом

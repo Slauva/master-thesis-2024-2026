@@ -89,8 +89,11 @@
 
 % Настройка подписей к изображениям и таблицам
 \captionsetup{format=hang,labelsep=period}
+\DeclareCaptionLabelSeparator{tablelinebreak}{\par}
 \captionsetup[table]{
   position=top,
+  format=plain,
+  labelsep=tablelinebreak,
   justification=centering,
   singlelinecheck=false
 }
